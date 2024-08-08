@@ -1,0 +1,103 @@
+#Importing Ncessary Libraries
+import pandas as pd
+import numpy as np
+import time
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping
+
+# Data Frame reading and pre-processing
+df_train = pd.read_csv('ECG_Train.txt', header=None, delim_whitespace=True)
+df_test = pd.read_csv('ECG_Test.txt', header=None, delim_whitespace=True)
+df = pd.concat([df_train, df_test], axis=0).reset_index(drop=True)
+df.to_csv('ECG_Final.csv', index=False)
+
+start_time = time.time()
+class_labels = df.iloc[:, -1]
+num_samples_to_plot = 2
+plt.figure(figsize=(15, 10))
+
+#Plotting Sample Graphs
+for i in range(num_samples_to_plot):
+    plt.subplot(num_samples_to_plot, 1, i + 1)
+    plt.plot(df.iloc[i, :-1])  # Exclude the last column which is the class label
+    plt.title(f'Sample {i + 1} - Class {class_labels.iloc[i]}')
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude')
+
+plt.tight_layout()
+plt.show()
+print(f"Time taken to plot samples: {time.time() - start_time} seconds")
+
+#Plotting Classes
+start_time = time.time()
+plt.figure(figsize=(10, 6))
+class_distribution = class_labels.value_counts()
+class_distribution.plot(kind='bar')
+plt.title('Distribution of Classes')
+plt.xlabel('Class')
+plt.ylabel('Count')
+plt.show()
+print(f"Time taken to plot class distribution: {time.time() - start_time} seconds")
+
+#Feature and Label Extraction, Standardization, and Normalization
+X = df.iloc[:, :-1] 
+y = df.iloc[:, -1]   
+
+# Standardize the features (mean=0, std=1)
+scaler = StandardScaler()
+X_standardized = scaler.fit_transform(X)
+
+# Normalize the features [0,1]
+normalizer = MinMaxScaler()
+X_normalized = normalizer.fit_transform(X_standardized)
+
+df2 = pd.DataFrame(X_normalized, columns=df.columns[:-1])
+df2['Label'] = y.values
+#print(df2.head())
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(df2.iloc[:, :-1], df2['Label'], test_size=0.2, random_state=42)
+print(f'X_train shape: {X_train.shape}')
+print(f'X_test shape: {X_test.shape}')
+print(f'y_train shape: {y_train.shape}')
+print(f'y_test shape: {y_test.shape}')
+
+#Data Reshaping for LSTM
+X_train_lstm = np.reshape(X_train.values, (X_train.shape[0], 1, X_train.shape[1]))
+X_test_lstm = np.reshape(X_test.values, (X_test.shape[0], 1, X_test.shape[1]))
+
+# Define the LSTM model --->Model Building
+model = Sequential()
+model.add(LSTM(50, input_shape=(X_train_lstm.shape[1], X_train_lstm.shape[2]), return_sequences=True))
+model.add(Dropout(0.2))
+model.add(LSTM(50))
+model.add(Dropout(0.2))
+model.add(Dense(1))
+
+model.compile(optimizer='adam', loss='mean_squared_error')
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+model.fit(X_train_lstm, y_train, epochs=50, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
+predictions = model.predict(X_test_lstm)
+
+# Calculate evaluation metrics
+mae = mean_absolute_error(y_test, predictions)
+mse = mean_squared_error(y_test, predictions)
+rmse = np.sqrt(mse)
+print(f'Mean Absolute Error: {mae}')
+print(f'Mean Squared Error: {mse}')
+print(f'Root Mean Squared Error: {rmse}')
+
+# Plot the results
+plt.figure(figsize=(12, 6))
+plt.plot(y_test.values, label='Actual Data')
+plt.plot(predictions, label='Predicted Data', color='red')
+plt.legend()
+plt.xlabel('Time')
+plt.ylabel('Value')
+plt.title('LSTM Forecast vs Actual Data')
+plt.show()
