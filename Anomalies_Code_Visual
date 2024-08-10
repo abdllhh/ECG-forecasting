@@ -1,0 +1,104 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
+# Assuming 'model', 'X_test_lstm', and 'y_test' are already defined and contain the trained model and test data
+
+# Step 1: Calculate Prediction Errors
+validation_predictions = model.predict(X_test_lstm)
+errors = np.abs(validation_predictions.flatten() - y_test.values)
+
+# Step 2: Compute Anomaly Scores
+anomaly_scores = errors
+
+# Step 3: Determine the Anomaly Threshold
+threshold = np.percentile(anomaly_scores, 95)
+
+# Step 4: Identify Anomalies
+anomalies = anomaly_scores > threshold
+
+# Step 5: Plot the Results (Matplotlib)
+plt.figure(figsize=(15, 6))
+plt.plot(y_test.values, label='Actual Data', color='blue')
+plt.plot(validation_predictions.flatten(), label='Predicted Data', color='red')
+
+# Highlight anomalies
+anomalous_data = np.where(anomalies, y_test.values, np.nan)
+plt.scatter(range(len(y_test)), anomalous_data, color='orange', label='Anomalies')
+
+plt.legend()
+plt.xlabel('Time')
+plt.ylabel('ECG Value')
+plt.title('ECG Data with Anomalies Highlighted')
+plt.show()
+
+# Step 6: Interactive Plot for ECG Data (Plotly)
+fig = go.Figure()
+
+# Add actual data trace
+fig.add_trace(go.Scatter(x=np.arange(len(y_test)), y=y_test.values, mode='lines', name='Actual Data', line=dict(color='blue')))
+
+# Add predicted data trace
+fig.add_trace(go.Scatter(x=np.arange(len(validation_predictions)), y=validation_predictions.flatten(), mode='lines', name='Predicted Data', line=dict(color='red')))
+
+# Highlight anomalies
+anomalous_indices = np.where(anomalies)[0]
+fig.add_trace(go.Scatter(x=anomalous_indices, y=y_test.values[anomalous_indices], mode='markers', name='Anomalies', marker=dict(color='orange', size=10)))
+
+# Add annotations
+for i in anomalous_indices:
+    fig.add_annotation(x=i, y=y_test.values[i], text="Anomaly", showarrow=True, arrowhead=2)
+
+# Update layout
+fig.update_layout(title='ECG Data with Anomalies Highlighted', xaxis_title='Time', yaxis_title='ECG Value')
+
+# Show the interactive plot
+fig.show()
+
+# Step 7: Interactive Histogram of Anomaly Scores (Plotly)
+fig_hist = go.Figure()
+
+# Add histogram trace
+fig_hist.add_trace(go.Histogram(x=anomaly_scores, nbinsx=50, name='Anomaly Scores', marker=dict(color='purple', opacity=0.75)))
+
+# Add threshold line
+fig_hist.add_trace(go.Scatter(x=[threshold, threshold], y=[0, max(np.histogram(anomaly_scores, bins=50)[0])], mode='lines', name='Anomaly Threshold', line=dict(color='red', dash='dash')))
+
+# Update layout
+fig_hist.update_layout(title='Histogram of Anomaly Scores', xaxis_title='Anomaly Score', yaxis_title='Frequency')
+
+# Show the interactive histogram
+fig_hist.show()
+
+# Step 8: Interactive Plot for ECG Data with Normal and Anomalous Data Highlighted (Plotly)
+fig_combined = go.Figure()
+
+# Add normal data trace (non-anomalous)
+normal_indices = np.where(~anomalies)[0]
+fig_combined.add_trace(go.Scatter(x=normal_indices, y=y_test.values[normal_indices], mode='lines', name='Normal Data', line=dict(color='blue')))
+
+# Add anomalous data trace
+fig_combined.add_trace(go.Scatter(x=anomalous_indices, y=y_test.values[anomalous_indices], mode='lines+markers', name='Anomalous Data', line=dict(color='red'), marker=dict(color='orange', size=10)))
+
+# Add predicted data trace for comparison
+fig_combined.add_trace(go.Scatter(x=np.arange(len(validation_predictions)), y=validation_predictions.flatten(), mode='lines', name='Predicted Data', line=dict(color='green', dash='dot')))
+
+# Update layout
+fig_combined.update_layout(title='ECG Data with Normal and Anomalous Segments Highlighted',
+                           xaxis_title='Time', yaxis_title='ECG Value')
+
+# Show the interactive plot
+fig_combined.show()
+
+
+### 5. Pie Chart of Normal vs. Anomalous Data
+num_anomalies = np.sum(anomalies)
+num_normals = len(anomalies) - num_anomalies
+
+plt.figure(figsize=(6, 6))
+plt.pie([num_normals, num_anomalies], labels=['Normal', 'Anomalous'], autopct='%1.1f%%', colors=['blue', 'orange'])
+plt.title('Proportion of Normal vs. Anomalous Data')
+plt.show()
+
+
