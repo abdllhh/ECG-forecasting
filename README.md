@@ -10,6 +10,4 @@ Model was trained on test and validation data and then dropout technique and ear
 ### Anomaly Detection
 Calculated key metrics, including Mean Absolute Error (MAE), Mean Squared Error (MSE), and Root Mean Squared Error (RMSE), to quantify the model’s accuracy in forecasting ECG signals. Comparison plot was created between actual and predicted ECG values, with a clear visual representation highlighting the model's forecasting ability. Used the plotted results to visually assess the alignment between the model’s predictions and actual data, providing an intuitive understanding of model performance.
 
-![image](https://github.com/user-attachments/assets/79ab75d5-c03c-4521-a0cd-21e9ecd509c8)
-
-
+![image](https://github.com/user-attachments/assets/dc4e5445-189d-4993-856b-83b885956d6f)
