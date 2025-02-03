@@ -1,5 +1,5 @@
 # ECG Anomaly Detection using Darts Temporal Convolutional Network (TCN)
-This project focuses on anomaly detection in ECG 5000 time series dataset using Temporal Convolutional Networks (TCNs) with the Darts library. The project includes data preprocessing, exploratory data analysis (EDA), forecasting, and anomaly detection and visualization.
+This project focuses on anomaly detection in ECG 5000 time series dataset using Temporal Convolutional Networks (TCNs) with the Darts library, and an LSTM approach The project includes data preprocessing, exploratory data analysis (EDA), forecasting, and anomaly detection and visualization.
 
 ### Data Preprocessing and EDA
 Data was split into training, validation, and test sets, and then normalized and scaled. Different Classes in the dataset were identified and their samples were visualized and the number of counts of each class were identified. 
